@@ -2,66 +2,42 @@ package io.hhplus.tdd.point;
 
 import io.hhplus.tdd.database.PointHistoryTable;
 import io.hhplus.tdd.database.UserPointTable;
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import io.hhplus.tdd.point.PointHistory;
-import io.hhplus.tdd.point.UserPoint;
-import io.hhplus.tdd.point.TransactionType;
-import io.hhplus.tdd.point.PointService;
-
-
-
-
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 @RestController
 @RequestMapping("/point")
-public class PointController {
+public class PointControllerTest {
 
-   private static final Logger log = LoggerFactory.getLogger(PointController.class);
+    private static final Logger log = LoggerFactory.getLogger(PointControllerTest.class);
 
     private final UserPointTable userPointTable;
     private final PointHistoryTable pointHistoryTable;
     private final ReentrantLock lock = new ReentrantLock();
     private static final long MAX_BALANCE = 1_000_000_000L;
 
-    public PointController(UserPointTable userPointTable, PointHistoryTable pointHistoryTable) {
+    public PointControllerTest(UserPointTable userPointTable, PointHistoryTable pointHistoryTable) {
         this.userPointTable = userPointTable;
         this.pointHistoryTable = pointHistoryTable;
     }
 
-    /**
-     * TODO - 특정 유저의 포인트를 조회하는 기능을 작성해주세요.
-     */
     @GetMapping("{id}")
     public UserPoint point(@PathVariable long id) {
-       return userPointTable.selectById(id);
+        return userPointTable.selectById(id);
     }
 
-    /**
-     * TODO - 특정 유저의 포인트 충전/이용 내역을 조회하는 기능을 작성해주세요.
-     */
     @GetMapping("{id}/histories")
-    public List<PointHistory> history(
-            @PathVariable long id
-    ) {
-       return pointHistoryTable.selectAllByUserId(id);
+    public List<PointHistory> history(@PathVariable long id) {
+        return pointHistoryTable.selectAllByUserId(id);
     }
 
-    /**
-     * TODO - 특정 유저의 포인트를 충전하는 기능을 작성해주세요.
-     */
     @PatchMapping("{id}/charge")
-    public UserPoint charge(
-            @PathVariable long id,
-            @RequestBody long amount
-    ) 
-    { lock.lock();
+    public UserPoint charge(@PathVariable long id, @RequestBody long amount) {
+        lock.lock();
         try {
             UserPoint current = userPointTable.selectById(id);
             long updated = current.point() + amount;
@@ -76,15 +52,8 @@ public class PointController {
         }
     }
 
-    /**
-     * TODO - 특정 유저의 포인트를 사용하는 기능을 작성해주세요.
-     */
     @PatchMapping("{id}/use")
-    public UserPoint use(
-            @PathVariable long id,
-            @RequestBody long amount
-    ) {
-        // 동시성 제어: 포인트 차감 시 잔고 부족 예외 또는 race condition 방지
+    public UserPoint use(@PathVariable long id, @RequestBody long amount) {
         lock.lock();
         try {
             UserPoint current = userPointTable.selectById(id);
